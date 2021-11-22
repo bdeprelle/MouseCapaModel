@@ -1,0 +1,91 @@
+#Control of mouse sperm capacitation by a positive feedback loop between sNHE and SLO3
+
+#V is expressed in mV, conductances are expressed in nS
+
+################################################################################################################################
+#Extracellular Medium
+##################
+
+HCO3e(t)=HCO3e0+pulse(t,t1,t1+duree1)*(HCO3e1-HCO3e0)+pulse(t,t2,t2+duree2)*(HCO3e2-HCO3e0)
+param HCO3e0=0.01, HCO3e1=0.015, HCO3e2=0.005
+param t1=4800, duree1=1200, t2=10800, duree2=1200
+aux HCO3e=HCO3e(t)
+
+pHe(t)=7.4
+He(t)=10^(-pHe(t))
+CO2e(t)=HCO3e(t)*He(t)/(Ka1*Kh)
+
+################################################################################################################################
+#Two mathematical functions
+##################
+
+pulse(t,debut,fin)=(heav(t-debut)-heav(t-(debut+deltaT)))*(t-debut)/deltaT+heav(t-(debut+deltaT))-heav(t-fin)+(heav(t-fin)-heav(t-(fin+deltaT)))*(1-(t-fin)/deltaT)
+param deltaT=1
+
+carre(t,debut,fin)=heav(t-debut)-heav(t-fin)
+
+################################################################################################################################
+#simulation settings
+################
+
+@ total=16800, dt=0.001
+
+init pHi=6.7321
+init V=-45.4736
+
+################################################################################################################################
+#The equations and functions
+########################
+
+dpHi/dt=((JHsNHE+JHbicar+JHpassive)-(k+JHCO2(t)))/beta
+dV/dt=10^(-9)/C*(-(1+alpha*PSLO3(t))*g~SLO3max/(1+(Hi/KASLO3)^q)*(V-VK)/(1+exp(-(V-V50SLO3)/s_SLO3))-gl*(V-Vl))
+
+beta=betaCO2+betaI
+betaCO2=HCO3i(t)/log10(exp(1))
+betaI=BI*Hi/log10(exp(1))
+Hi=10^(-pHi)
+HCO3i(t)=Ka1*Kh*CO2e(t)/10^(-pHi)
+aux HCO3i=HCO3i(t)
+
+JHsNHE=ESNHE*1/(1+(KAsNHE/Hi)^j)/(1+exp((V-(V50sNHE))/s))
+V50sNHE=V~50sNHE+ksNHE*1/(1+(KAbsNHE/HCO3i(t))^2)
+
+JHbicar=kbicar/(1+(KAbicar/Hi)^4)*(HCO3e(t)-HCO3i(t))
+
+JHpassive=kHpassive*(V)*(Hi-He(t)*exp(-0.0375*V))/(1-exp(-0.0375*V))
+
+#dpHi/dt due to dCO2e/dt: the last factor is dC02e/dt
+JHCO2(t)=beta/betaI*Ka1*Kh/(HCO3i(t)/BI+Hi)*derCO2e(t)
+derCO2e(t)=carre(t,t1,t1+deltaT)*(CO2e(t1+deltaT)-CO2e(t1))/deltaT+carre(t,t1+duree1,t1+duree1+deltaT)*(CO2e(t1+duree1+deltaT)-CO2e(t1+duree1))/deltaT+carre(t,t2,t2+deltaT)*(CO2e(t2+deltaT)-CO2e(t2))/deltaT+carre(t,t2+duree2,t2+duree2+deltaT)*(CO2e(t2+duree2+deltaT)-CO2e(t2+duree2))/deltaT
+aux derCO2e=derCO2e(t)
+
+PSLO3(t)=1/(1+(KAbSLO3/HCO3i(t))^n)
+aux PSLO3=PSLO3(t)
+
+################################################################################################################################
+# parameters
+###########
+
+param n=6, alpha=8.3, BI=10000, KAbsNHE=0.003, KAbicar=1e-6, KAsNHE=3e-7, j=4, EsNHE=0.004, s=4, V~50sNHE=-70, ksNHE=14.1, Ka1=0.00028, Kh=0.003, k=5e-6, kHpassive=5, C=2.5e-12, g~SLO3max=6.4, KASLO3=32e-9, q=1.65, KAbSLO3=0.005, VK=-84.9, s_SLO3=76, V50SLO3=-12.8, gl=1, Vl=-40
+
+kbicar=1/3
+
+################################################################################################################################
+#More settings
+############
+
+#nullclines
+@ NMESH=100
+@ XNC=9
+@ YNC=2
+
+#data storage
+@ maxstor=1000000000
+
+#axes limits
+@ xlo=6, xhi=8, ylo=-90, yhi=-25, 
+
+#variables to be plotted
+@ nplot=2, yp1=V, xp1=pHi
+
+done
