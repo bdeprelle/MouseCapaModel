@@ -19,6 +19,7 @@ CO2e(t)=HCO3e(t)*He(t)/(Ka1*Kh)
 #Two mathematical functions
 ##################
 
+#Definition of a pulse function taking nonzero values between t=debut and t=fin+deltaT, where deltaT is small. A linear jump from 0 to 1 occurs between t=debut and t=debut+deltaT. The function then remains at the value 1 between t=debut+deltaT and t=fin. Finally a linear jump from 1 to 0 occurs between t=fin and t=fin+deltaT.
 pulse(t,debut,fin)=(heav(t-debut)-heav(t-(debut+deltaT)))*(t-debut)/deltaT+heav(t-(debut+deltaT))-heav(t-fin)+(heav(t-fin)-heav(t-(fin+deltaT)))*(1-(t-fin)/deltaT)
 param deltaT=1
 
